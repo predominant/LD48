@@ -11,6 +11,10 @@ namespace Assets.LD48.Scripts
         private float _torque = 10f;
         [SerializeField]
         private ParticleSystem[] ThrustParticles;
+        [SerializeField]
+        private LayerMask _platformLayer;
+        [SerializeField]
+        private float _platformImpactScale = 0.5f;
         
         private Rigidbody _rigidbody;
         private AudioSource _audioSource;
@@ -28,6 +32,8 @@ namespace Assets.LD48.Scripts
             }
         }
 
+        [SerializeField]
+        private float _maxImpactTolerance = 2f;
         [SerializeField]
         private float _impactScale = 1f;
         private float _health = 100;
@@ -95,7 +101,7 @@ namespace Assets.LD48.Scripts
         {
             if (this._thrustButton)
             {
-                if (this.Fuel > 0f)
+                if (this.Fuel > 0f && this.Health > 0f)
                     this.DoThrust();
                 else
                     this.StopThrust();
@@ -109,6 +115,20 @@ namespace Assets.LD48.Scripts
             
             if (this._thrusting)
                 this.Fuel -= this._fuelBurnRate * Time.fixedDeltaTime;
+        }
+
+        private void OnCollisionEnter(Collision other)
+        {
+            var impactMagnitude = other.relativeVelocity.magnitude;
+            if (impactMagnitude < this._maxImpactTolerance)
+                return;
+            
+            var impactScale = this._impactScale;
+
+            if (this._platformLayer == 1 << other.gameObject.layer)
+                impactScale *= this._platformImpactScale;
+
+            this.Health -= impactScale * impactMagnitude;
         }
     }
 }
