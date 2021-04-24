@@ -1519,7 +1519,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 877437027}
   serializedVersion: 2
-  m_Mass: 100
+  m_Mass: 30
   m_Drag: 0.1
   m_AngularDrag: 2.5
   m_UseGravity: 1
@@ -1540,12 +1540,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _thrustForce: 900
-  _torque: 150
+  _torque: 180
   ThrustParticles:
   - {fileID: 1751102049}
   - {fileID: 1752061668}
   - {fileID: 2050963502}
-  _fuelBurnRate: 20
+  _fuelBurnRate: 10
   _impactScale: 1
 --- !u!82 &877437031
 AudioSource:
@@ -1559,7 +1559,7 @@ AudioSource:
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 8300000, guid: bd8321a2c6ca51741b31a17de3d0ab76, type: 3}
   m_PlayOnAwake: 0
-  m_Volume: 0.4
+  m_Volume: 0.2
   m_Pitch: 1
   Loop: 1
   Mute: 0

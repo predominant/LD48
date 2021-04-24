@@ -42,6 +42,8 @@ namespace Assets.LD48.Scripts
         }
 
         private bool _thrusting = false;
+        private bool _thrustButton = false;
+        private float _turnValue = 0f;
         
         public delegate void FuelChanged(float amount);
         public static event FuelChanged OnFuelChanged;
@@ -57,26 +59,13 @@ namespace Assets.LD48.Scripts
 
         private void Update()
         {
-            if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow) || Input.GetButton("Fire1"))
-            {
-                if (this.Fuel > 0f)
-                    this.DoThrust();
-                else
-                    this.StopThrust();
-            }
-            else
-            {
-                this.StopThrust();
-            }
-
-            var turn = Input.GetAxis("Horizontal");
-            this._rigidbody.AddTorque(Vector3.back * this._torque * turn);
+            if (Input.GetKeyDown(KeyCode.W) || Input.GetKeyDown(KeyCode.UpArrow) || Input.GetButtonDown("Fire1"))
+                this._thrustButton = true;
             
-            // if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow))
-            //     this._rigidbody.AddTorque(Vector3.forward * this._torque);
-            //
-            // if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow))
-            //     this._rigidbody.AddTorque(Vector3.back * this._torque);
+            if (Input.GetKeyUp(KeyCode.W) || Input.GetKeyUp(KeyCode.UpArrow) || Input.GetButtonUp("Fire1"))
+                this._thrustButton = false;
+
+            this._turnValue = Input.GetAxis("Horizontal");
         }
 
         private void DoThrust()
@@ -104,6 +93,20 @@ namespace Assets.LD48.Scripts
 
         private void FixedUpdate()
         {
+            if (this._thrustButton)
+            {
+                if (this.Fuel > 0f)
+                    this.DoThrust();
+                else
+                    this.StopThrust();
+            }
+            else
+            {
+                this.StopThrust();
+            }
+            
+            this._rigidbody.AddTorque(Vector3.back * this._torque * this._turnValue);
+            
             if (this._thrusting)
                 this.Fuel -= this._fuelBurnRate * Time.fixedDeltaTime;
         }
