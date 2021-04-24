@@ -8,6 +8,7 @@ namespace Assets.LD48.Scripts
 {
     public class LevelGenerator : MonoBehaviour
     {
+        public int Seed = 1;
         public int MinSections = 5;
         public float Width = 20f;
         public float Height = 10f;
@@ -32,6 +33,8 @@ namespace Assets.LD48.Scripts
 
         private void Awake()
         {
+            Random.InitState(this.Seed);
+            
             this.transform.position = Vector3.up * this.Height;
             var pool = new GameObject("Pool");
             this.PoolTransform = pool.transform;
