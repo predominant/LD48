@@ -12,6 +12,12 @@ namespace Assets.LD48.Scripts
 
         ParticleSystem.Particle[] parts = null;
 
+        public delegate void Repositioned();
+        public static event Repositioned OnRepositioned;
+
+        public delegate void WillReposition();
+        public static event WillReposition OnWillReposition;
+
         void LateUpdate()
         {
             var cameraPosition = this.transform.position;
@@ -20,6 +26,8 @@ namespace Assets.LD48.Scripts
             if (cameraPosition.magnitude > threshold)
             {
                 Debug.Log("Floating Origin - Repositioning");
+                OnWillReposition?.Invoke();
+                
                 foreach (var g in SceneManager.GetActiveScene().GetRootGameObjects())
                     g.transform.position -= cameraPosition;
 
@@ -56,6 +64,8 @@ namespace Assets.LD48.Scripts
 
                     if (wasPlaying)
                         sys.Play();
+                    
+                    OnRepositioned?.Invoke();
                 }
 
                 if (physicsThreshold > 0f)

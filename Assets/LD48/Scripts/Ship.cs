@@ -15,6 +15,12 @@ namespace Assets.LD48.Scripts
         private LayerMask _platformLayer;
         [SerializeField]
         private float _platformImpactScale = 0.5f;
+        [SerializeField]
+        private ParticleSystem _explosionParticles;
+        [SerializeField]
+        private AudioSource _explosionAudioSource;
+        [SerializeField]
+        private GameObject _model;
         
         private Rigidbody _rigidbody;
         private AudioSource _audioSource;
@@ -46,6 +52,11 @@ namespace Assets.LD48.Scripts
             {
                 this._health = Mathf.Clamp(value, 0f, 100f);
                 OnHealthChanged?.Invoke(value);
+                if (value <= 0f)
+                {
+                    OnShipDied?.Invoke();
+                    this.Die();
+                }
             }
         }
 
@@ -60,6 +71,9 @@ namespace Assets.LD48.Scripts
 
         public delegate void HealthChanged(float amount);
         public static event HealthChanged OnHealthChanged;
+
+        public delegate void ShipDied();
+        public static event ShipDied OnShipDied;
 
         private void Awake()
         {
@@ -141,6 +155,14 @@ namespace Assets.LD48.Scripts
                 impactScale *= this._platformImpactScale;
 
             this.Health -= impactScale * impactMagnitude;
+        }
+
+        private void Die()
+        {
+            this._explosionParticles.Play();
+            this._explosionAudioSource.Play();
+            this._rigidbody.isKinematic = true;
+            this._model.SetActive(false);
         }
     }
 }
