@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using UnityEngine;
 
 namespace Assets.LD48.Scripts
@@ -20,10 +21,19 @@ namespace Assets.LD48.Scripts
         [SerializeField]
         private AudioSource _explosionAudioSource;
         [SerializeField]
+        private AudioSource _hurtAudioSource;
+        [SerializeField]
         private GameObject _model;
         [SerializeField]
         private float _thrustTimeout = 2f;
+        [SerializeField]
+        private LayerMask _wallLayer;
+        [SerializeField]
+        private Transform[] _cheatCheckPoints;
 
+        private int _cheatCount = 0;
+        private bool _died = false;
+        
         private bool ThrustTimedOut => Time.fixedTime > this._lastThrust + this._thrustTimeout;
         private bool AtRest => this._rigidbody.velocity.magnitude <= 0.1f;
         
@@ -31,6 +41,8 @@ namespace Assets.LD48.Scripts
         private AudioSource _audioSource;
 
         private bool _devmodeShip = false;
+
+        private WaitForSeconds CheatWait = new WaitForSeconds(2f);
 
         [SerializeField]
         private float _fuelBurnRate = 1f;
@@ -65,6 +77,31 @@ namespace Assets.LD48.Scripts
             }
         }
 
+        private bool _paused = false;
+        private Vector3 _prePause_angularVelocity;
+        private Vector3 _prePause_velocity;
+        public bool Paused
+        {
+            get => this._paused;
+            set
+            {
+                this._paused = value;
+
+                if (this._paused)
+                {
+                    this._prePause_angularVelocity = this._rigidbody.angularVelocity;
+                    this._prePause_velocity = this._rigidbody.velocity;
+                    this._rigidbody.isKinematic = true;
+                }
+                else
+                {
+                    this._rigidbody.isKinematic = false;
+                    this._rigidbody.angularVelocity = this._prePause_angularVelocity;
+                    this._rigidbody.velocity = this._prePause_velocity;
+                }
+            }
+        }
+
         private bool _thrusting = false;
         private bool _thrustButton = false;
         private float _lastThrust = 0f;
@@ -85,6 +122,8 @@ namespace Assets.LD48.Scripts
         {
             this._rigidbody = this.GetComponent<Rigidbody>();
             this._audioSource = this.GetComponent<AudioSource>();
+
+            this.StartCoroutine(nameof(CheatCheck));
         }
 
         private void Update()
@@ -167,14 +206,59 @@ namespace Assets.LD48.Scripts
                 impactScale *= this._platformImpactScale;
 
             this.Health -= impactScale * impactMagnitude;
+            this._hurtAudioSource.Play();
         }
 
         private void Die()
         {
+            if (this._died)
+                return;
+
+            this._died = true;
             this._explosionParticles.Play();
             this._explosionAudioSource.Play();
             this._rigidbody.isKinematic = true;
             this._model.SetActive(false);
+        }
+
+        private IEnumerator CheatCheck()
+        {
+            while (this.Alive)
+            {
+                yield return this.CheatWait;
+
+                if (this.Cheating())
+                {
+                    this._cheatCount++;
+                    Debug.Log("CHEATING DETECTED");
+                }
+
+                if (this._cheatCount > 2)
+                {
+                    this.Die();
+                    yield break;
+                }
+            }
+        }
+
+        private bool Cheating()
+        {
+            bool left = false;
+            bool right = false;
+            
+            foreach (var t in this._cheatCheckPoints)
+            {
+                if (Physics.Raycast(this.transform.position, t.localPosition, 50f, this._wallLayer))
+                    if (t.localPosition.x < 0)
+                        left = true;
+                    else
+                        right = true;
+
+                if (left && right)
+                    return false;
+            }
+            
+            return true;
         }
     }
 }

@@ -23,6 +23,7 @@ namespace Assets.LD48.Scripts
         public GameObject PlatformPrefab;
         public LayerMask PlatformLayer;
         public GameObject HealthPackPrefab;
+        public LayerMask HealthpackLayer;
         public Vector3 PrefabPoolPosition;
         public Material[] WallMaterials;
 
@@ -125,18 +126,14 @@ namespace Assets.LD48.Scripts
                         spawnHeight);
                 }
                 
-                if (!placedPlatform && i > this.Height / 2f)
+                if (!placedPlatform && i > this.Height / 2f && height > 1)
                 {
-                    // Random chance of placing platform
-                    // if (Random.Range(0, 2) == 1)
-                    // {
                     placedPlatform = true;
                     this.SpawnPlatform(
                         sectionObject.transform,
                         leftPos,
                         rightPos,
                         spawnHeight);
-                // }
                 }
             }
         }
@@ -162,7 +159,7 @@ namespace Assets.LD48.Scripts
 
         private void RemoveWall(GameObject o)
         {
-            if (this.PlatformLayer == 1 << o.layer)
+            if (this.PlatformLayer == 1 << o.layer || this.HealthpackLayer == 1 << o.layer)
             {
                 GameObject.Destroy(o);
                 return;
@@ -182,7 +179,7 @@ namespace Assets.LD48.Scripts
             // right = right < 0f ? right + right / 3f : right - right / 3f;
 
             var midpoint = (left + right) / 2f;
-            var size = Mathf.Abs(left - right) / 3f;
+            var size = Mathf.Abs(left - right) / 3.5f;
 
             platform.transform.localPosition = new Vector3(
                 // Random.Range(this.Width / -2f + left, this.Width / 2f + right),

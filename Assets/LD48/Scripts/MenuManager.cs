@@ -22,9 +22,5 @@ namespace Assets.LD48.Scripts
             #endif
             Application.Quit();
         }
-
-        public void HighScores()
-        {
-        }
     }
 }
