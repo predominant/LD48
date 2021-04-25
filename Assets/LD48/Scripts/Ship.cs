@@ -19,10 +19,12 @@ namespace Assets.LD48.Scripts
         private Rigidbody _rigidbody;
         private AudioSource _audioSource;
 
+        private bool _devmodeShip = false;
+
         [SerializeField]
         private float _fuelBurnRate = 1f;
         private float _fuel = 100;
-        private float Fuel
+        public float Fuel
         {
             get => this._fuel;
             set
@@ -50,6 +52,8 @@ namespace Assets.LD48.Scripts
         private bool _thrusting = false;
         private bool _thrustButton = false;
         private float _turnValue = 0f;
+
+        public bool Alive => this._devmodeShip || (this.Fuel > 0f && this.Health > 0f);
         
         public delegate void FuelChanged(float amount);
         public static event FuelChanged OnFuelChanged;
@@ -70,6 +74,14 @@ namespace Assets.LD48.Scripts
             
             if (Input.GetKeyUp(KeyCode.W) || Input.GetKeyUp(KeyCode.UpArrow) || Input.GetButtonUp("Fire1"))
                 this._thrustButton = false;
+            
+            #if UNITY_EDITOR
+            if (Input.GetButtonDown("Fire2"))
+            {
+                this._devmodeShip = !this._devmodeShip;
+                Debug.Log($"Dev Mode: {this._devmodeShip}");
+            }
+            #endif
 
             this._turnValue = Input.GetAxis("Horizontal");
         }
@@ -101,7 +113,7 @@ namespace Assets.LD48.Scripts
         {
             if (this._thrustButton)
             {
-                if (this.Fuel > 0f && this.Health > 0f)
+                if (this.Alive)
                     this.DoThrust();
                 else
                     this.StopThrust();

@@ -13,6 +13,8 @@ namespace Assets.LD48.Scripts
         [SerializeField]
         protected Color WarningColor;
         [SerializeField]
+        protected Color ErrorColor = Color.red;
+        [SerializeField]
         protected TMP_Text Label;
         [SerializeField]
         protected Image Background;
@@ -29,7 +31,9 @@ namespace Assets.LD48.Scripts
                     this[i].color = this.InactiveColor;
             }
 
-            if (amount < 30)
+            if (amount <= 0.01f)
+                this.SetError();
+            else if (amount < 30f)
                 this.SetWarning();
             else
                 this.ClearWarning();
@@ -45,6 +49,12 @@ namespace Assets.LD48.Scripts
         {
             this.Label.color = this.ActiveColor;
             this.Background.color = this.ActiveColor;
+        }
+        
+        private void SetError()
+        {
+            this.Label.color = this.WarningColor;
+            this.Background.color = this.WarningColor;
         }
     }
 }

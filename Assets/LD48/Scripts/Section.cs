@@ -13,8 +13,9 @@ namespace Assets.LD48.Scripts
             if (this.Generator == null)
                 return;
 
-            if (this.transform.localPosition.y > this.Generator.Height * 3f)
+            if (this.transform.position.y > this.Generator.Height * 2f)
             {
+                Debug.Log($"Section {this.Height} moved out of range, disposing.");
                 this.Generator.RemoveSection(this.Height);
                 GameObject.Destroy(this.gameObject);
             }

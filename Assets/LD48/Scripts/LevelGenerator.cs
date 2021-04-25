@@ -20,9 +20,10 @@ namespace Assets.LD48.Scripts
         public float BoxRotation = 30f;
         public Transform CameraTransform;
         public GameObject WallPrefab;
+        public GameObject PlatformPrefab;
+        public LayerMask PlatformLayer;
         public Vector3 PrefabPoolPosition;
         public Material[] WallMaterials;
-
 
         private int _lastHeight = 1;
         
@@ -50,7 +51,7 @@ namespace Assets.LD48.Scripts
                 this.GenerateSection(this._lastHeight++);
         }
 
-        private int CurrentSections => this.transform.childCount;
+        private int CurrentSections => GameObject.FindObjectsOfType<Section>().Length;
 
         private void GenerateSection(int height = 1, bool initialSpawn = false)
         {
@@ -59,16 +60,25 @@ namespace Assets.LD48.Scripts
             section.Height = height;
             section.Generator = this;
             
-            sectionObject.transform.parent = this.transform;
+            // sectionObject.transform.parent = this.transform;
+
             if (initialSpawn)
-                sectionObject.transform.localPosition = Vector3.down * (this.Height * (height - 1));
+            {
+                sectionObject.transform.localPosition = Vector3.up * this.Height + Vector3.down * (this.Height * (height - 1));
+            }
             else
-                sectionObject.transform.localPosition = Vector3.down * (this.Height * 2);
+            {
+                // sectionObject.transform.localPosition = Vector3.down * (this.Height * 2);
+                var lastSection = GameObject.Find($"Section {height - 1}").transform;
+                sectionObject.transform.position = lastSection.position + (Vector3.down * this.Height);
+            }
 
             GameObject wall;
             float mainOffset;
-            float offset;
+            float offset1, offset2;
             float spawnHeight = 0;
+
+            bool placedPlatform = false;
 
             for (var i = 0f; i < this.Height; i += this.HeightStep)
             {
@@ -79,25 +89,43 @@ namespace Assets.LD48.Scripts
                 mainOffset *= this.MainOffsetScale;
                 // Debug.Log($"Main offset: {mainOffset}");
                 
-                offset = Mathf.PerlinNoise(0.25f, (float)height / 100f + (float)i / (float)height) - 0.5f;
-                offset *= this.OffsetScale;
-                offset += mainOffset;
+                // Left Wall
+                offset1 = Mathf.PerlinNoise(0.25f, (float)height / 100f + (float)i / (float)height) - 0.5f;
+                offset1 *= this.OffsetScale;
+                offset1 += mainOffset;
                 wall = this.GetWall();
                 wall.transform.parent = sectionObject.transform;
-                wall.transform.localPosition = new Vector3(this.Width / -2f + offset, spawnHeight, 0);
+                var leftPos = this.Width / -2f + offset1;
+                wall.transform.localPosition = new Vector3(leftPos, spawnHeight, 0);
                 wall.transform.rotation = Quaternion.Euler(0, 0, Random.Range(-1f, 1f) * this.BoxRotation);
                 wall.transform.localScale = Random.Range(this.MinBoxScale, this.MaxBoxScale) * Vector3.one;
                 wall.GetComponentInChildren<Renderer>().material = this.RandomWallMaterial;
 
-                offset = Mathf.PerlinNoise(0.75f, (float)height / 100f + (float)i / (float)height);
-                offset *= this.OffsetScale;
-                offset += mainOffset;
+                // Right Wall
+                offset2 = Mathf.PerlinNoise(0.75f, (float)height / 100f + (float)i / (float)height);
+                offset2 *= this.OffsetScale;
+                offset2 += mainOffset;
                 wall = this.GetWall();
                 wall.transform.parent = sectionObject.transform;
-                wall.transform.localPosition = new Vector3(this.Width / 2f + offset, spawnHeight, 0);
+                var rightPos = this.Width / 2f + offset2;
+                wall.transform.localPosition = new Vector3(rightPos, spawnHeight, 0);
                 wall.transform.rotation = Quaternion.Euler(0, 0, Random.Range(-1f, 1f) * this.BoxRotation);
                 wall.transform.localScale = Random.Range(this.MinBoxScale, this.MaxBoxScale) * Vector3.one;
                 wall.GetComponentInChildren<Renderer>().material = this.RandomWallMaterial;
+
+                if (!placedPlatform && i > this.Height / 2f)
+                {
+                    // Random chance of placing platform
+                    if (Random.Range(0, 2) == 1)
+                    {
+                        this.SpawnPlatform(
+                            sectionObject.transform,
+                            leftPos,
+                            rightPos,
+                            spawnHeight);
+                        placedPlatform = true;
+                    }
+                }
             }
         }
 
@@ -105,7 +133,8 @@ namespace Assets.LD48.Scripts
 
         public void RemoveSection(int height)
         {
-            var section = this.transform.Find($"Section {height}");
+            // var section = this.transform.Find($"Section {height}");
+            var section = GameObject.Find($"Section {height}").transform;
             foreach (Transform t in section)
                 this.RemoveWall(t.gameObject);
         }
@@ -121,9 +150,34 @@ namespace Assets.LD48.Scripts
 
         private void RemoveWall(GameObject o)
         {
+            if (this.PlatformLayer == 1 << o.layer)
+            {
+                GameObject.Destroy(o);
+                return;
+            }
+
             o.transform.position = this.PrefabPoolPosition;
             o.transform.parent = this.PoolTransform;
             this._wallPool.Push(o);
+        }
+
+        private void SpawnPlatform(Transform parent, float left, float right, float height)
+        {
+            Debug.Log($"{parent.gameObject.name}: left: {left}, right: {right}");
+            var platform = GameObject.Instantiate(this.PlatformPrefab, parent);
+            platform.gameObject.name = $"Platform for {parent.gameObject.name}";
+            platform.transform.parent = parent;
+            // left = left < 0f ? left + left / 3f : left - left / 3f;
+            // right = right < 0f ? right + right / 3f : right - right / 3f;
+
+            var midpoint = (left + right) / 2f;
+            var size = Mathf.Abs(left - right) / 3f;
+
+            platform.transform.localPosition = new Vector3(
+                // Random.Range(this.Width / -2f + left, this.Width / 2f + right),
+                Random.Range(midpoint - size, midpoint + size),
+                height,
+                0f);
         }
     }
 }
