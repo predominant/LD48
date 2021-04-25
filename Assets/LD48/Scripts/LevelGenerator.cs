@@ -22,6 +22,7 @@ namespace Assets.LD48.Scripts
         public GameObject WallPrefab;
         public GameObject PlatformPrefab;
         public LayerMask PlatformLayer;
+        public GameObject HealthPackPrefab;
         public Vector3 PrefabPoolPosition;
         public Material[] WallMaterials;
 
@@ -79,6 +80,7 @@ namespace Assets.LD48.Scripts
             float spawnHeight = 0;
 
             bool placedPlatform = false;
+            bool placedHealthPack = false;
 
             for (var i = 0f; i < this.Height; i += this.HeightStep)
             {
@@ -113,18 +115,28 @@ namespace Assets.LD48.Scripts
                 wall.transform.localScale = Random.Range(this.MinBoxScale, this.MaxBoxScale) * Vector3.one;
                 wall.GetComponentInChildren<Renderer>().material = this.RandomWallMaterial;
 
+                if (!placedHealthPack && Mathf.FloorToInt(height) % 2 == 0 && height > 2)
+                {
+                    placedHealthPack = true;
+                    this.SpawnHealthPack(
+                        sectionObject.transform,
+                        leftPos,
+                        rightPos,
+                        spawnHeight);
+                }
+                
                 if (!placedPlatform && i > this.Height / 2f)
                 {
                     // Random chance of placing platform
-                    if (Random.Range(0, 2) == 1)
-                    {
-                        this.SpawnPlatform(
-                            sectionObject.transform,
-                            leftPos,
-                            rightPos,
-                            spawnHeight);
-                        placedPlatform = true;
-                    }
+                    // if (Random.Range(0, 2) == 1)
+                    // {
+                    placedPlatform = true;
+                    this.SpawnPlatform(
+                        sectionObject.transform,
+                        leftPos,
+                        rightPos,
+                        spawnHeight);
+                // }
                 }
             }
         }
@@ -166,7 +178,6 @@ namespace Assets.LD48.Scripts
             Debug.Log($"{parent.gameObject.name}: left: {left}, right: {right}");
             var platform = GameObject.Instantiate(this.PlatformPrefab, parent);
             platform.gameObject.name = $"Platform for {parent.gameObject.name}";
-            platform.transform.parent = parent;
             // left = left < 0f ? left + left / 3f : left - left / 3f;
             // right = right < 0f ? right + right / 3f : right - right / 3f;
 
@@ -178,6 +189,26 @@ namespace Assets.LD48.Scripts
                 Random.Range(midpoint - size, midpoint + size),
                 height,
                 0f);
+        }
+
+        private void SpawnHealthPack(Transform parent, float left, float right, float height)
+        {
+            var midpoint = (left + right) / 2f;
+            var size = Mathf.Abs(left - right) / 3f;
+
+            var pos = new Vector3(
+                Random.Range(midpoint - size, midpoint + size),
+                height,
+                0f);
+
+            Collider[] results = new Collider[1];
+            var resultCount = Physics.OverlapSphereNonAlloc(parent.position + pos, 1.2f, results, this.PlatformLayer);
+            if (resultCount != 0)
+                return;
+            
+            var pack = GameObject.Instantiate(this.HealthPackPrefab, this.PrefabPoolPosition, Quaternion.identity);
+            pack.transform.parent = parent;
+            pack.transform.localPosition = pos;
         }
     }
 }

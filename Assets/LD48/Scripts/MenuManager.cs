@@ -10,6 +10,11 @@ namespace Assets.LD48.Scripts
             SceneManager.LoadScene("Game");
         }
 
+        public void Menu()
+        {
+            SceneManager.LoadScene("Menu");
+        }
+
         public void Quit()
         {
             #if UNITY_EDITOR

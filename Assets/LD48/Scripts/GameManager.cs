@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using TMPro;
 using UnityEngine;
 
@@ -9,6 +10,9 @@ namespace Assets.LD48.Scripts
         [SerializeField]
         private TMP_Text ScoreText;
 
+        [SerializeField]
+        private GameObject DeathMenu;
+        
         private Transform _shipTransform;
         private Ship _ship;
 
@@ -16,7 +20,7 @@ namespace Assets.LD48.Scripts
         private float _currentScore;
 
         private bool _shipDied = false;
-
+        
         private void Awake()
         {
             this.Init();
@@ -42,6 +46,14 @@ namespace Assets.LD48.Scripts
         {
             if (this._ship.Alive || !this._shipDied)
                 this.UpdateScore();
+
+            if (this._shipDied)
+            {
+                if (Input.GetButton("Fire1"))
+                {
+                    // Retry? So you don't have to put the controller down.
+                }
+            }
         }
         
         private void UpdateScore()
@@ -69,6 +81,13 @@ namespace Assets.LD48.Scripts
         private void OnShipDied()
         {
             this._shipDied = true;
+            this.StartCoroutine(this.ShowDeathMenu());
+        }
+
+        private IEnumerator ShowDeathMenu()
+        {
+            yield return new WaitForSecondsRealtime(2f);
+            this.DeathMenu.SetActive(true);
         }
     }
 }

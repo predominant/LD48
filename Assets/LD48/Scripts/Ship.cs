@@ -21,6 +21,11 @@ namespace Assets.LD48.Scripts
         private AudioSource _explosionAudioSource;
         [SerializeField]
         private GameObject _model;
+        [SerializeField]
+        private float _thrustTimeout = 2f;
+
+        private bool ThrustTimedOut => Time.fixedTime > this._lastThrust + this._thrustTimeout;
+        private bool AtRest => this._rigidbody.velocity.magnitude <= 0.1f;
         
         private Rigidbody _rigidbody;
         private AudioSource _audioSource;
@@ -45,7 +50,7 @@ namespace Assets.LD48.Scripts
         [SerializeField]
         private float _impactScale = 1f;
         private float _health = 100;
-        private float Health
+        public float Health
         {
             get => this._health;
             set
@@ -62,6 +67,7 @@ namespace Assets.LD48.Scripts
 
         private bool _thrusting = false;
         private bool _thrustButton = false;
+        private float _lastThrust = 0f;
         private float _turnValue = 0f;
 
         public bool Alive => this._devmodeShip || (this.Fuel > 0f && this.Health > 0f);
@@ -98,11 +104,16 @@ namespace Assets.LD48.Scripts
             #endif
 
             this._turnValue = Input.GetAxis("Horizontal");
+
+            // This forces player death when they have no fuel, and have finished falling.
+            if (this.Fuel <= 0f && this.AtRest && this.ThrustTimedOut && this.Health > 0f)
+                this.Health = 0f;
         }
 
         private void DoThrust()
         {
             this._thrusting = true;
+            this._lastThrust = Time.fixedTime;
             this._rigidbody.AddForce(this.transform.up * this._thrustForce);
             foreach (var p in this.ThrustParticles)
                 if (p.isStopped)
@@ -137,7 +148,8 @@ namespace Assets.LD48.Scripts
                 this.StopThrust();
             }
             
-            this._rigidbody.AddTorque(Vector3.back * this._torque * this._turnValue);
+            if (this.Alive)
+                this._rigidbody.AddTorque(Vector3.back * this._torque * this._turnValue);
             
             if (this._thrusting)
                 this.Fuel -= this._fuelBurnRate * Time.fixedDeltaTime;

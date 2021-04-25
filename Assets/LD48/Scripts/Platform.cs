@@ -49,9 +49,15 @@ namespace Assets.LD48.Scripts
             if (this._shipLayer != 1 << other.gameObject.layer)
                 return;
 
+            // Debug.Log(other.collider.gameObject.transform.parent.gameObject.name);
+            // Debug.Log(other.collider.gameObject.tag);
+            // if (this.TimeExpired && other.collider.gameObject.CompareTag("RefuelCollider"))
+
             if (this.TimeExpired)
+            {
                 this.StartCoroutine(nameof(DestroyPlatform));
-            
+            }
+
             this.StopCoroutine(nameof(Refuel));
             this._refuelCoroutineRunning = false;
         }
